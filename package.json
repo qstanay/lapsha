@@ -1,0 +1,51 @@
+{
+  "name": "lapsha",
+  "version": "0.0.1",
+  "description": "Simple REST API framework for Node.js and TypeScript.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Denis Lapshin <denis@lapsha.dev>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/qstanay/lapsha.git"
+  },
+  "homepage": "https://github.com/qstanay/lapsha#readme",
+  "bugs": {
+    "url": "https://github.com/qstanay/lapsha/issues"
+  },
+  "keywords": [
+    "rest",
+    "api",
+    "framework",
+    "http",
+    "typescript",
+    "nodejs"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "pnpm@12.18.0",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsc",
+    "test": "pnpm run build && node --test test/*.test.mjs",
+    "prepublishOnly": "pnpm run test"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2"
+  }
+}
