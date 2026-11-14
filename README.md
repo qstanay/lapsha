@@ -20,7 +20,7 @@ dist/           JavaScript and type declarations published to npm
 test/           not published
 ```
 
-`pnpm test` typechecks `src/` and writes `dist/`. The `exports` map points at `dist/index.js` and `dist/index.d.ts`. The published tarball contains `dist/`, this readme, and the license.
+`pnpm test` typechecks `src/` and writes `dist/`. It needs `DATABASE_URL` pointing at a Postgres server. The `exports` map points at `dist/index.js` and `dist/index.d.ts`. The published tarball contains `dist/`, this readme, and the license.
 
 ## Release
 

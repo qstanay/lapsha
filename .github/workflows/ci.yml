@@ -14,6 +14,22 @@ jobs:
     strategy:
       matrix:
         node: [22, 24, 26]
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: lapsha
+          POSTGRES_PASSWORD: lapsha
+          POSTGRES_DB: lapsha
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U lapsha -d lapsha"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgres://lapsha:lapsha@localhost:5432/lapsha
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6

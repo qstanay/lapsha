@@ -40,6 +40,8 @@ test("published tarball is the build, the readme, and the license", async () => 
   assert.deepEqual(paths, [
     "LICENSE",
     "README.md",
+    "dist/connection.d.ts",
+    "dist/connection.js",
     "dist/index.d.ts",
     "dist/index.js",
     "package.json",
