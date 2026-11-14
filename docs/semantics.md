@@ -1,28 +1,28 @@
-# Семантика workflow
+# Workflow semantics
 
-Зафиксировано. Манифест v0.1 остаётся черновиком продукта. Если пример в манифесте расходится с этими правилами, верны правила.
+Locked. The v0.1 manifest remains a product draft. If an example in the manifest disagrees with these rules, the rules win. Terms are defined in [terminology.md](./terminology.md). That glossary adds no rules beyond these.
 
-## Правила
+## Rules
 
-1. `await ctx.<resource>.<command>()` внутри `workflow` — один durable step. В этом колбэке есть только ресурсы. `ctx.db` туда не передаётся.
-2. Команда базы записывает свои SQL и результат шага одной транзакцией. Внешняя команда делает два коммита: сначала `started` и ключ, после ответа — `completed` и результат. Сам вызов стоит между ними.
-3. `ctx.db` вне `workflow` — обычная транзакция Postgres. Журнала нет. Незафиксированное откатывает сама база.
-4. При восстановлении функция вызывается с начала. Завершённый шаг сразу возвращает записанный результат. Шаг в состоянии `started` повторяется с тем же ключом и теми же аргументами. Код между `await` выполняется заново и может опираться только на аргументы workflow и на эти результаты.
-5. У workflow есть id. Повторный вход с тем же id продолжает тот же журнал. Id и аргументы записываются до первого шага.
+1. `await ctx.<resource>.<command>()` inside `workflow` is one durable step. The callback receives only resources. `ctx.db` is not passed in.
+2. A database command commits its SQL and the step result in one transaction. An external command makes two commits: first `started` and the key, then, after the response, `completed` and the result. The call sits between them.
+3. `ctx.db` outside `workflow` is an ordinary Postgres transaction. There is no journal. Postgres rolls back anything that was not committed.
+4. On recovery the function is called from the beginning. A completed step returns its stored result immediately. A step in the `started` state is repeated with the same key and the same arguments. Code between `await`s runs again and may depend only on the workflow arguments and on those results.
+5. A workflow has an id. Entering again with the same id continues the same journal. The id and the arguments are written before the first step.
 
-`refund` и любое другое бизнес-решение после сбоя — следующий `await` в коде приложения. Lapsha доводит выполнение до последнего подтверждённого шага и не решает, возвращать ли деньги.
+`refund`, and any other business decision after a failure, is the next `await` in application code. Lapsha advances execution to the last confirmed step and does not decide whether to return the money.
 
-## Следствия
+## Consequences
 
-Тело команды базы получает `db` и не вызывает другие ресурсы. Иначе внутри одного метода появляется второй шаг или внешний запрос посреди транзакции.
+The body of a database command receives `db` and does not call other resources. Otherwise one method would contain a second step, or an external call in the middle of a transaction.
 
-Тело внешней команды делает запрос и возвращает результат. Журнал вокруг него ведёт Lapsha.
+The body of an external command performs the request and returns the result. Lapsha keeps the journal around that call.
 
-`Promise.all` из двух команд не входит в модель: у журнала один текущий шаг.
+`Promise.all` of two commands is not part of the model: the journal has one current step.
 
-Смену порядка `await` в уже запущенном workflow пока не решаем.
+Reordering `await`s in a workflow that has already started is not decided yet.
 
-## Форма кода
+## Code shape
 
 ```ts
 await workflow("checkout", async (ctx) => {

@@ -2,13 +2,13 @@
 
 > TypeScript backend framework for writing reliable business operations with minimal code.
 
-Семантика workflow зафиксирована в [semantics.md](./semantics.md). При расхождении с примерами ниже верны правила оттуда.
+Workflow semantics are locked in [semantics.md](./semantics.md). If an example below disagrees with those rules, the rules win.
 
-## 1. Основная идея
+## 1. Core idea
 
-Lapsha позволяет писать сложный backend как простой TypeScript-код.
+Lapsha lets you write a complex backend as ordinary TypeScript.
 
-Разработчик думает прежде всего о бизнес-операциях:
+The developer thinks first about business operations:
 
 ```ts
 createOrder();
@@ -17,7 +17,7 @@ sendEmail();
 reserveProduct();
 ```
 
-а не об инфраструктурных деталях:
+rather than about infrastructure details:
 
 ```text
 DependencyInjectionContainer
@@ -27,15 +27,15 @@ WebhookDispatcher
 SagaCoordinator
 ```
 
-Сложность должна находиться внутри framework, а не в application code.
+Complexity belongs inside the framework, not in application code.
 
 ---
 
-## 2. Главная философия
+## 2. Main philosophy
 
-### Меньше ceremony
+### Less ceremony
 
-Если задачу можно решить обычным TypeScript:
+When ordinary TypeScript can express the task:
 
 ```ts
 export async function checkout(ctx) {
@@ -43,7 +43,7 @@ export async function checkout(ctx) {
 }
 ```
 
-не нужно заставлять разработчика писать:
+the developer should not have to write:
 
 ```ts
 @Controller()
@@ -53,13 +53,13 @@ export async function checkout(ctx) {
 @UseInterceptors()
 ```
 
-Декораторы не запрещены, но не должны быть обязательной частью архитектуры.
+Decorators are allowed. They are not a required part of the architecture.
 
-### Обычный TypeScript — главный API
+### Ordinary TypeScript is the main API
 
-Lapsha не должен заставлять пользователя изучать собственный DSL.
+Lapsha must not force the user to learn a custom DSL.
 
-Предпочтительно:
+Prefer:
 
 ```ts
 await workflow('checkout', async () => {
@@ -70,15 +70,15 @@ await workflow('checkout', async () => {
 });
 ```
 
-а не сложные цепочки builder API, если обычный TypeScript способен выразить то же самое.
+over a long builder-API chain, when ordinary TypeScript can express the same thing.
 
 ---
 
-# 3. Основные принципы
+# 3. Principles
 
 ## 3.1. Framework complexity ≠ application complexity
 
-Внутри Lapsha может быть сложная инфраструктура:
+Lapsha may contain complicated infrastructure:
 
 - dependency injection;
 - transactions;
@@ -91,13 +91,13 @@ await workflow('checkout', async () => {
 - webhooks;
 - workflow engine.
 
-Но application code должен оставаться простым.
+Application code stays simple.
 
 ---
 
 ## 3.2. Context
 
-Request-scoped и связанные с текущей операцией вещи доступны через `ctx`:
+Request-scoped values, and values tied to the current operation, are available through `ctx`:
 
 ```ts
 ctx.request;
@@ -108,15 +108,15 @@ ctx.payments;
 ctx.logger;
 ```
 
-Context — основной способ передавать окружение операции.
+Context is the main way to pass the operation's environment.
 
-Глобальные singleton-импорты не должны быть обязательным стилем.
+Global singleton imports are not the required style.
 
 ---
 
 ## 3.3. Resources
 
-Внешние системы представлены как resources:
+External systems are represented as resources:
 
 ```text
 db
@@ -127,7 +127,7 @@ mail
 queue
 ```
 
-Например:
+For example:
 
 ```ts
 const payment = await ctx.payments.charge({
@@ -136,21 +136,21 @@ const payment = await ctx.payments.charge({
 });
 ```
 
-Важно: resource — это не просто удобная обёртка над SDK. Framework должен понимать, что внешний resource имеет собственные failure modes.
+A resource is not merely a convenient wrapper over an SDK. The framework must understand that an external resource has its own failure modes.
 
 ---
 
 ## 3.4. Reliability first
 
-Если Lapsha что-то делает автоматически, поведение должно быть предсказуемым.
+When Lapsha does something automatically, the behavior must be predictable.
 
-Например:
+For example:
 
 ```ts
 await payments.charge(...);
 ```
 
-может включать:
+may include:
 
 - timeout;
 - retry;
@@ -159,21 +159,21 @@ await payments.charge(...);
 - logging;
 - tracing.
 
-Но разработчик должен понимать, какое поведение произойдёт.
+The developer must be able to tell which behavior will happen.
 
-Никакого:
+There is no place for:
 
-> «оно почему-то само повторило запрос три раза».
+> "it somehow retried the request three times by itself."
 
 ---
 
-# 4. Workflow — центральная концепция
+# 4. Workflow is the central concept
 
-Главная идея Lapsha — не просто HTTP framework, а framework для надёжного выполнения бизнес-операций.
+Lapsha is not only an HTTP framework. It is a framework for running business operations reliably.
 
-Workflow — это операция, которая должна корректно переживать сбои.
+A workflow is an operation that must survive failures correctly.
 
-Например:
+For example:
 
 ```ts
 await workflow('checkout', async () => {
@@ -185,7 +185,7 @@ await workflow('checkout', async () => {
 });
 ```
 
-Framework потенциально отвечает за:
+The framework may be responsible for:
 
 ```text
 state
@@ -197,27 +197,27 @@ external effects
 compensation
 ```
 
-Формулировка:
+Statement:
 
-> Workflow описывает бизнес-операцию, а Lapsha заботится о её жизненном цикле.
+> A workflow describes the business operation, and Lapsha takes care of its lifecycle.
 
 ---
 
-# 5. Почему Stripe — важный design constraint
+# 5. Why Stripe is an important design constraint
 
-Stripe — хороший пример проблемы, которую должен решать Lapsha.
+Stripe is a good example of the problem Lapsha must solve.
 
-Нельзя считать это одной ACID-транзакцией:
+This is not one ACID transaction:
 
 ```text
 PostgreSQL transaction
         +
 Stripe API
         ≠
-одна ACID transaction
+one ACID transaction
 ```
 
-Например:
+For example:
 
 ```text
 BEGIN DB transaction
@@ -229,9 +229,9 @@ DB error
 ROLLBACK
 ```
 
-Stripe уже списал деньги.
+Stripe has already taken the money.
 
-Поэтому Lapsha не должен притворяться, что:
+Lapsha must not pretend that:
 
 ```ts
 db.transaction(async () => {
@@ -239,23 +239,23 @@ db.transaction(async () => {
 });
 ```
 
-магически делает Stripe частью транзакции.
+magically makes Stripe part of the transaction.
 
-Вместо этого используется workflow.
+A workflow is used instead.
 
 ---
 
 # 6. Idempotency
 
-Idempotency должна быть фундаментальной для:
+Idempotency is fundamental for:
 
 - payments;
 - webhooks;
 - jobs;
 - external APIs;
-- повторного запуска workflows.
+- running workflows again.
 
-Например:
+For example:
 
 ```ts
 await payments.charge({
@@ -264,19 +264,19 @@ await payments.charge({
 });
 ```
 
-Идея:
+Idea:
 
-> Повторный запуск операции не должен случайно выполнить опасный external side effect дважды.
+> Running an operation again must not accidentally perform a dangerous external side effect twice.
 
-В подходящих случаях Lapsha должен уметь генерировать или управлять idempotency автоматически.
+Where it fits, Lapsha should be able to generate or manage idempotency automatically.
 
 ---
 
-# 7. Webhooks — first-class citizen
+# 7. Webhooks are a first-class citizen
 
-Webhook не должен быть просто обычным HTTP endpoint, который разработчик вручную разбирает.
+A webhook should not be just an ordinary HTTP endpoint that the developer parses by hand.
 
-Желаемый API:
+Desired API:
 
 ```ts
 payments.webhook(async event => {
@@ -286,7 +286,7 @@ payments.webhook(async event => {
 });
 ```
 
-Framework должен уметь брать на себя:
+The framework should be able to take on:
 
 ```text
 signature verification
@@ -297,21 +297,15 @@ acknowledgement
 logging
 ```
 
-Webhook должен рассматриваться как часть lifecycle external resource/workflow.
+A webhook is part of the lifecycle of an external resource or workflow.
 
 ---
 
-# 8. Ошибки
+# 8. Errors
 
-Ошибки должны быть структурированными.
+Errors should be structured.
 
-Вместо:
-
-```ts
-throw new Error('Something went wrong');
-```
-
-предпочтительно:
+Prefer this:
 
 ```ts
 throw new PaymentError({
@@ -320,7 +314,13 @@ throw new PaymentError({
 });
 ```
 
-Framework должен понимать категории вроде:
+to:
+
+```ts
+throw new Error('Something went wrong');
+```
+
+The framework should understand categories such as:
 
 ```text
 retryable
@@ -331,21 +331,21 @@ expected
 unexpected
 ```
 
-HTTP/API слой может автоматически преобразовывать такие ошибки в корректный response.
+The HTTP/API layer may turn these errors into the right response.
 
 ---
 
 # 9. Observability
 
-Observability должна быть встроена в framework.
+Observability should be built into the framework.
 
-Разработчик пишет:
+The developer writes:
 
 ```ts
 await payments.charge(...);
 ```
 
-а в production можно получить:
+and in production can see:
 
 ```text
 checkout
@@ -355,7 +355,7 @@ checkout
  └── total                  311ms
 ```
 
-Встроенные возможности должны включать как минимум:
+Built-in capabilities should include at least:
 
 - request ID;
 - structured logs;
@@ -363,67 +363,67 @@ checkout
 - error context;
 - operation timing.
 
-Observability не должна становиться отдельным проектом после релиза.
+Observability should not become a separate project after the release.
 
 ---
 
 # 10. Vendor lock-in
 
-Бизнес-код не должен зависеть напрямую от конкретного провайдера.
+Business code should not depend directly on a specific provider.
 
-Предпочтительно:
+Prefer:
 
 ```ts
 await ctx.payments.charge(...);
 ```
 
-а не:
+to:
 
 ```ts
 await stripe.paymentIntents.create(...);
 ```
 
-Например:
+For example:
 
 ```text
 Stripe → Adyen
 ```
 
-не должен требовать переписывания основной бизнес-логики.
+should not require rewriting the main business logic.
 
-Stripe — implementation.
+Stripe is an implementation.
 
-`payments` — abstraction.
+`payments` is the abstraction.
 
 ---
 
-# 11. Но abstraction не должна уничтожать возможности provider
+# 11. Abstraction must not erase provider capabilities
 
-Нельзя делать настолько универсальный интерфейс, что он превращает мощные API конкретного провайдера в бесполезный минимум.
+The interface must not be so universal that a provider's powerful API becomes a useless minimum.
 
-Например:
+For example:
 
 ```ts
 await ctx.payments.charge(...);
 ```
 
-должен покрывать большинство обычных случаев.
+should cover most ordinary cases.
 
-Но должна оставаться возможность получить provider-specific capabilities:
+Provider-specific capabilities remain available:
 
 ```ts
 await ctx.payments.stripe.paymentIntent(...);
 ```
 
-Принцип:
+Principle:
 
-> 80% случаев — простой abstraction. 20% — доступ к power features.
+> 80% of cases use the simple abstraction. 20% can reach the power features.
 
 ---
 
-# 12. Не оптимизировать API под внутреннюю архитектуру
+# 12. Do not shape the API around the internal architecture
 
-Если внутри Lapsha понадобятся:
+If Lapsha later needs:
 
 ```text
 DI container
@@ -433,9 +433,9 @@ event bus
 workflow engine
 ```
 
-это не означает, что пользователь должен видеть их API.
+the user does not have to see those APIs.
 
-Сначала проектируется пользовательский API:
+Design the user API first:
 
 ```ts
 await orders.create();
@@ -443,13 +443,11 @@ await payments.charge();
 await workflow(...);
 ```
 
-и только потом выбирается внутренняя реализация.
-
-Не наоборот.
+and choose the internal implementation after that.
 
 ---
 
-# 13. Целевая архитектурная картина
+# 13. Target architecture
 
 ```text
                     LAPSHA
@@ -470,50 +468,50 @@ await workflow(...);
                        │
                  Application code
                        │
-              "обычный TypeScript"
+              "ordinary TypeScript"
 ```
 
-Три ключевые концепции:
+Three key concepts:
 
-1. **Context** — окружение текущей операции.
-2. **Resources** — взаимодействие с внешним миром.
-3. **Workflow** — надёжное выполнение бизнес-операции.
-
----
-
-# 14. Что Lapsha НЕ должен быть
-
-Lapsha не должен быть:
-
-- ещё одним Express;
-- «NestJS, только проще»;
-- набором decorators/modules ради enterprise-архитектуры;
-- исключительно HTTP framework;
-- ORM с несколькими middleware;
-- тонкой обёрткой над Stripe SDK;
-- DSL, который заставляет писать код не на TypeScript.
-
-Главное отличие должно быть не в количестве features, а в модели:
-
-> **Lapsha оптимизирован вокруг надёжных business operations.**
+1. **Context** — the environment of the current operation.
+2. **Resources** — interaction with the outside world.
+3. **Workflow** — reliable execution of a business operation.
 
 ---
 
-# 15. Позиционирование
+# 14. What Lapsha must not become
 
-Рабочая формулировка:
+Lapsha must not become:
+
+- another Express;
+- "NestJS, only simpler";
+- a set of decorators and modules for the sake of an enterprise architecture;
+- only an HTTP framework;
+- an ORM with a few middleware;
+- a thin wrapper over the Stripe SDK;
+- a DSL that forces you to write something other than TypeScript.
+
+The difference is the model, not the number of features:
+
+> **Lapsha is optimized around reliable business operations.**
+
+---
+
+# 15. Positioning
+
+Working formulation:
 
 > **Lapsha — TypeScript backend framework for writing reliable business operations with minimal code.**
 
-Более концептуально:
+More conceptual:
 
-> **Ты пишешь бизнес-логику. Lapsha занимается тем, что происходит, когда всё идёт не по плану.**
+> **You write the business logic. Lapsha handles what happens when things do not go according to plan.**
 
 ---
 
-# 16. Что пока НЕ фиксируем
+# 16. What we are not locking yet
 
-На этом этапе не принимаем архитектурные решения относительно:
+At this stage we do not decide:
 
 - ORM;
 - DI container;
@@ -522,12 +520,12 @@ Lapsha не должен быть:
 - CLI;
 - config system;
 - monorepo structure;
-- конкретной структуры npm-пакетов;
+- the exact npm package structure;
 - deployment model.
 
-Это второй уровень.
+That is the second level.
 
-Сначала необходимо проверить и реализовать фундаментальные идеи:
+First we need to test and implement the fundamental ideas:
 
 ```text
 Context
@@ -540,9 +538,9 @@ Recovery
 
 ---
 
-# 17. Главный критерий успеха
+# 17. Main success criterion
 
-Если обычный разработчик может написать:
+We are moving in the right direction when an ordinary developer can write:
 
 ```ts
 export async function checkout(ctx) {
@@ -562,7 +560,7 @@ export async function checkout(ctx) {
 }
 ```
 
-а Lapsha при этом корректно решает:
+and Lapsha correctly handles:
 
 ```text
 Stripe timeout
@@ -577,13 +575,11 @@ recovery
 observability
 ```
 
-— значит, мы движемся в правильном направлении.
-
 ---
 
-# 18. Lapsha v0.1 — итог
+# 18. Lapsha v0.1 — summary
 
-Фундаментальная формула:
+Fundamental formula:
 
 ```text
 Simple TypeScript
@@ -599,6 +595,6 @@ Reliability
 Lapsha
 ```
 
-Главная идея:
+Core idea:
 
-> **Не уменьшать возможности backend framework, а уменьшать количество инфраструктурного кода, который разработчику приходится писать самому.**
+> **Do not reduce what a backend framework can do. Reduce the amount of infrastructure code the developer has to write.**
