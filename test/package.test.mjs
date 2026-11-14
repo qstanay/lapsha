@@ -46,6 +46,8 @@ test("published tarball is the build, the readme, and the license", async () => 
     "dist/index.js",
     "dist/journal.d.ts",
     "dist/journal.js",
+    "dist/workflow.d.ts",
+    "dist/workflow.js",
     "package.json",
   ]);
 });

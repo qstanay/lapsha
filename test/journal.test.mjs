@@ -11,7 +11,6 @@ before(async () => {
   const connection = await connect(databaseUrl);
   try {
     await connection.query("drop schema if exists lapsha cascade");
-    await connection.query("drop schema if exists lapsha_journal cascade");
     await createJournal(connection);
   } finally {
     await connection.close();
