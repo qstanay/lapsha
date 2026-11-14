@@ -8,11 +8,15 @@ export type ConnectionConfig = {
   readonly database?: string;
 };
 
-export type Connection = {
+export type Transaction = {
   query(
     sql: string,
     params?: readonly unknown[],
   ): Promise<readonly Record<string, unknown>[]>;
+};
+
+export type Connection = Transaction & {
+  transaction<T>(run: (tx: Transaction) => Promise<T>): Promise<T>;
   close(): Promise<void>;
 };
 
@@ -25,19 +29,59 @@ export async function connect(config: string | ConnectionConfig): Promise<Connec
 class PostgresConnection implements Connection {
   #client: Client;
   #closed = false;
+  #inTransaction = false;
 
   constructor(client: Client) {
     this.#client = client;
   }
 
-  async query(
+  async transaction<T>(run: (tx: Transaction) => Promise<T>): Promise<T> {
+    if (this.#closed) {
+      throw new Error("Connection is closed");
+    }
+    if (this.#inTransaction) {
+      throw new Error("A transaction is already open");
+    }
+
+    this.#inTransaction = true;
+    const tx: Transaction = {
+      query: (sql, params) => this.#query(sql, params),
+    };
+    try {
+      await this.#query("begin");
+      try {
+        const result = await run(tx);
+        await this.#query("commit");
+        return result;
+      } catch (error) {
+        try {
+          await this.#query("rollback");
+        } catch {
+          // The callback error is the one to report.
+        }
+        throw error;
+      }
+    } finally {
+      this.#inTransaction = false;
+    }
+  }
+
+  query(
     sql: string,
-    params: readonly unknown[] = [],
+    params?: readonly unknown[],
+  ): Promise<readonly Record<string, unknown>[]> {
+    return this.#query(sql, params);
+  }
+
+  async #query(
+    sql: string,
+    params?: readonly unknown[],
   ): Promise<readonly Record<string, unknown>[]> {
     if (this.#closed) {
       throw new Error("Connection is closed");
     }
-    const result = await this.#client.query(sql, [...params]);
+    const values = params === undefined ? [] : [...params];
+    const result = await this.#client.query(sql, values);
     return result.rows as Record<string, unknown>[];
   }
 
