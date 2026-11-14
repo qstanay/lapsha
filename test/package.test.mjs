@@ -44,6 +44,8 @@ test("published tarball is the build, the readme, and the license", async () => 
     "dist/connection.js",
     "dist/index.d.ts",
     "dist/index.js",
+    "dist/journal.d.ts",
+    "dist/journal.js",
     "package.json",
   ]);
 });
