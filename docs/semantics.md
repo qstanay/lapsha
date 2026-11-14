@@ -8,7 +8,7 @@ Locked. The v0.1 manifest remains a product draft. If an example in the manifest
 2. A database command commits its SQL and the step result in one transaction. An external command makes two commits: first `started` and the key, then, after the response, `completed` and the result. The call sits between them.
 3. `ctx.db` outside `workflow` is an ordinary Postgres transaction. There is no journal. Postgres rolls back anything that was not committed.
 4. On recovery the function is called from the beginning. A completed step returns its stored result immediately. A step in the `started` state is repeated with the same key and the same arguments. Code between `await`s runs again and may depend only on the workflow arguments and on those results.
-5. A workflow has an id. Entering again with the same id continues the same journal. The id and the arguments are written before the first step.
+5. A workflow has an id. Entering again with the same id, the same name, and the same arguments continues the same journal. The same id with a different name or different arguments is rejected. The id and the arguments are written before the first step.
 
 `refund`, and any other business decision after a failure, is the next `await` in application code. Lapsha advances execution to the last confirmed step and does not decide whether to return the money.
 

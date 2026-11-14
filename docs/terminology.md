@@ -4,7 +4,7 @@ Definitions of the words in [semantics.md](./semantics.md). This file adds no ru
 
 ## workflow
 
-A workflow is a run of an application function under a stable id. The callback receives resources and does not receive `ctx.db`. The id and the arguments are written before the first step. Entering again with the same id continues the same journal.
+A workflow is a run of an application function under a stable id. The callback receives resources and does not receive `ctx.db`. The id and the arguments are written before the first step. Entering again with the same id, the same name, and the same arguments continues the same journal. A different name or different arguments are rejected.
 
 ## step
 
